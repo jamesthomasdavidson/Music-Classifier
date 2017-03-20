@@ -1,7 +1,7 @@
 import numpy as np
 import pickle as pck
-import random
 
+#Track class
 class Track(object):
 
     def __init__(self, track_id, feature_vector, genre):
@@ -34,12 +34,15 @@ class Track(object):
         print('ID: %3d Genre: %7s' % (self.id, self.genre))
         print('Feature Vector: ' + str(self.feature_vector) + '\n')
 
+#get features
 def features():
     return np.load('data.npz')['arr_0'].tolist()
 
+#get genres
 def genres():
     return np.load('labels.npz')['arr_0'].tolist()
 
+#get track id's
 def track_ids(genre = None):
     tracks = pck.load(open('tracks.pck','r'))
     if genre == 'Rap':
@@ -50,15 +53,18 @@ def track_ids(genre = None):
         return tracks[2000:3000]
     return tracks
 
+#get dictionary
 def get_dictionary():
     return pck.load(open('dictionary.pck','r'))
 
+#get words
 def get_words():
     words = np.load('words.npz')['arr_0']
     dictionary = get_dictionary()
     words = [dictionary[word] for word in words]
     return words
 
+#get tracks
 def get_tracks(genre = None):
     tracks = []
     for l,t,f in zip(track_ids(), features(), genres()):
@@ -71,25 +77,22 @@ def get_tracks(genre = None):
         return np.array([t for t in tracks if t.genre == 3])
     return np.array(tracks)
 
-
-#start
-tag = {'Rap' : 12, 'Pop_Rock' : 1, 'Country' : 3}
-words = get_words()
-tracks = get_tracks()
-labels = genres()
-
+#get vocabulary
 def extract_vocabulary(D):
     V = []
     for word in words:
         V.append(word)
     return V
 
+#get n documents
 def count_documents(D):
     return len(D)
 
+#get the n instances
 def count_docs_in_class(D, c):
     return len([get_tracks(genre = c)])
 
+#concatenate all of the text in docs
 def concatenate_all_text_in_docs(D, c):
     text, tracks = [], get_tracks(genre = c)
     for word in words:
@@ -100,9 +103,11 @@ def concatenate_all_text_in_docs(D, c):
                 n = n - 1
     return text
 
+#count instances of t in text_c
 def count_tokens_of_terms(text_c, t):
     return text_c.count(t)
 
+#extract all instaces of every word from doc, even if repeated
 def extract_tokens_from_doc(V, d):
     text = []
     for word in words:
@@ -144,8 +149,7 @@ def apply_multinomial(C, V, prior, condprob, d):
     return argmax
 
 #run the multinomial model
-def run_multinomial():
-
+def run():
     C, D = ['Rap', 'Pop_Rock', 'Country'], get_tracks()
 
     #applies the multinomial and prints the data
@@ -192,24 +196,21 @@ def run_multinomial():
         print('\n')
 
     #setup
-    random.shuffle(D)
+    np.random.shuffle(D)
     V, prior, condprob = train_multinomial(C, D)
 
-    #uncomment if wanting to test on same data used to train
-    print_statistics(D)
+    # # uncomment if wanting to test on same data used to train
+    # print_statistics(D)
 
-    #uncomment if wanting to print out the probabilities of a word given a genre
+    # # uncomment if wanting to print out the probabilities of a word given a genre
     # for c in C:
     #     for word in words:
     #         print('(%s,%s,%-.3f)' % (word, c, condprob[(word,c)]))
 
-    #uncomment if wanting to randomly generate song lyrics
+    # # uncomment if wanting to randomly generate song lyrics
     # def get_probabilistic_word(genre = None):
     #     assert(genre is not None)
-    #     prob_dist = []
-    #     for word in words:
-    #         prob_dist.append(condprob[(word, genre)])
-    #     return np.random.choice(words, p = prob_dist)
+    #     return np.random.choice(words, p = [condprob[(word, genre)] for word in words])
     # n_lyrics, n_songs = 20, 5
     # generated_tracks = []
     # for e, c in enumerate(C):
@@ -222,7 +223,7 @@ def run_multinomial():
     #     t.print_track()
     # print_statistics(generated_tracks)
 
-    # uncomment if wanting to perform a k folds analysis
+    # # uncomment if wanting to perform a k folds analysis
     # k = 10
     # for k_i in range(k):
     #     k_folds = np.split(D, k)
@@ -231,6 +232,9 @@ def run_multinomial():
     #     V, prior, condprob = train_multinomial(C, train_data)
     #     print_statistics(test_data)
 
-
-#run
-run_multinomial()
+#start
+tag = {'Rap' : 12, 'Pop_Rock' : 1, 'Country' : 3}
+words = get_words()
+tracks = get_tracks()
+labels = genres()
+run()
